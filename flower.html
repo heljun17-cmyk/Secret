@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flower Bouquet</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fdf2f8;
+    font-family: Arial, sans-serif;
+  }
+  canvas {
+    background: #fff7ed;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+  }
+  p { color: #9d174d; }
+</style>
+</head>
+<body>
+<canvas id="bouquet" width="600" height="600"></canvas>
+<p>Click the bouquet to make a new one</p>
+
+<script>
+const canvas = document.getElementById('bouquet');
+const ctx = canvas.getContext('2d');
+
+const palettes = [
+  { petal: '#f472b6', center: '#fde047' },
+  { petal: '#fb7185', center: '#fef08a' },
+  { petal: '#c084fc', center: '#fde047' },
+  { petal: '#f97316', center: '#7c2d12' },
+  { petal: '#facc15', center: '#78350f' },
+  { petal: '#60a5fa', center: '#fde047' },
+  { petal: '#ffffff', center: '#f59e0b' }
+];
+
+function rand(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function drawStem(x1, y1, x2, y2) {
+  ctx.strokeStyle = '#15803d';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.quadraticCurveTo((x1 + x2) / 2 + rand(-20, 20), (y1 + y2) / 2, x2, y2);
+  ctx.stroke();
+}
+
+function drawLeaf(x, y, angle) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = '#22c55e';
+  ctx.beginPath();
+  ctx.ellipse(18, 0, 18, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFlower(x, y, size, palette) {
+  const petals = Math.floor(rand(6, 11));
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rand(0, Math.PI));
+  for (let i = 0; i < petals; i++) {
+    ctx.rotate((Math.PI * 2) / petals);
+    ctx.fillStyle = palette.petal;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(size * 0.65, 0, size * 0.6, size * 0.28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.fillStyle = palette.center;
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawWrapping() {
+  const tipX = 300, tipY = 560;
+  ctx.fillStyle = '#fbcfe8';
+  ctx.strokeStyle = '#be185d';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(180, 390);
+  ctx.lineTo(420, 390);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // ribbon
+  ctx.fillStyle = '#be185d';
+  ctx.fillRect(215, 425, 170, 16);
+  ctx.beginPath();
+  ctx.ellipse(300, 433, 22, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBouquet() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const baseX = 300, baseY = 420;
+  const count = 9;
+  const flowers = [];
+
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1);
+    const angle = (-Math.PI / 2) + (t - 0.5) * 1.7 + rand(-0.08, 0.08);
+    const length = rand(190, 290);
+    flowers.push({
+      x: baseX + Math.cos(angle) * length,
+      y: baseY + Math.sin(angle) * length,
+      size: rand(32, 48),
+      palette: palettes[Math.floor(Math.random() * palettes.length)]
+    });
+  }
+
+  // stems and leaves first
+  flowers.forEach(f => {
+    drawStem(baseX, baseY, f.x, f.y);
+    const mx = (baseX + f.x) / 2, my = (baseY + f.y) / 2;
+    drawLeaf(mx, my, rand(-Math.PI, Math.PI));
+  });
+
+  // flower heads, higher ones first so lower ones overlap nicely
+  flowers.sort((a, b) => a.y - b.y).forEach(f => {
+    drawFlower(f.x, f.y, f.size, f.palette);
+  });
+
+  drawWrapping();
+}
+
+canvas.addEventListener('click', drawBouquet);
+drawBouquet();
+</script>
+</body>
+</html>
